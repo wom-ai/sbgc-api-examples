@@ -9,6 +9,7 @@
 #include <fcntl.h>
 
 #include <SBGC.h>
+#include <SBGC_Linux.h>
 
 #define BUF_MAX 512
 
@@ -96,6 +97,11 @@ int main( void)
 
     printf("listening...\n");
 
+	SBGC_cmd_control_t c = { 0, 0, 0, 0, 0, 0, 0 };
+
+	c.mode = SBGC_CONTROL_MODE_ANGLE;
+	c.speedROLL = c.speedPITCH = c.speedYAW = 30 * SBGC_SPEED_SCALE;
+	SBGC_cmd_control_send(c, sbgc_parser);
     while(1) {
 
         write( fd, "R", 1);
