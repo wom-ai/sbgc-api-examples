@@ -13,6 +13,7 @@ include_directories( ../libraries/SBGC_lib)
 include_directories( ../libraries/SBGC_Linux)
 add_executable( LinuxSerialControl
   LinuxSerialControl.cpp
+  ../libraries/SBGC_lib/SBGC_cmd_helpers.cpp
   ../libraries/SBGC_Linux/SBGC_Linux.cpp
 )
 #target_include_directories( uart

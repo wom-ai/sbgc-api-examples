@@ -13,7 +13,8 @@
 
 #define BUF_MAX 512
 
-#define DEVICE_NAME "/dev/ttyACM0"
+//#define DEVICE_NAME "/dev/ttyACM0"
+#define DEVICE_NAME "/dev/ttyUSB0"
 
 int fd;
 struct termios oldtio, newtio;
@@ -31,7 +32,7 @@ void init_serial(int &fd, struct termios &oldtio, struct termios &newtio)
         fprintf(stderr, "Error %i from tcgetattr: %s\n", errno, strerror(errno));
     }
 
-    printf("open " DEVICE_NAME "\n");
+    printf("open " DEVICE_NAME " by FD(%d)\n", fd);
     memset(&newtio, 0, sizeof(newtio) );
 
     newtio.c_cflag = B115200; // BAUD RATE
@@ -87,29 +88,94 @@ void init_sig(void)
 
 int main( void)
 {
-    int i=0;
-
-    char buf[BUF_MAX];
-
     init_serial(fd, oldtio, newtio);
 
     init_sig();
 
-    printf("listening...\n");
+    printf("moving...\n");
 
+    printf("Set RPY=(0, 0, 0)...\n");
+	SBGC_Demo_setup(fd);
+
+#if 1
+    static SBGC_cmd_control_ext_t cmd_control = { 
+        { SBGC_CONTROL_MODE_NO, SBGC_CONTROL_MODE_ANGLE, SBGC_CONTROL_MODE_ANGLE },  // control mode for ROLL, PITCH, YAW
+        { { 0, 0 }, { 0, 0 }, { 0, 0 } }  // angle and speed
+    }; 
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+    printf("Set RPY=(0, 10, 0)...\n");
+    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(10); 
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+
+    printf("Set RPY=(0, -10, 0)...\n");
+    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(-10); 
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+    printf("Set RPY=(0, 0, 0)...\n");
+    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(0); 
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+    printf("Set RPY=(0, 0, 10)...\n");
+    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(10);
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+
+    printf("Set RPY=(0, 0, -10)...\n");
+    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(-10);
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+    printf("Set RPY=(0, 0, 0)...\n");
+    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(0);
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+
+    printf("Turn off Control...\n");
+    cmd_control = { 
+        { SBGC_CONTROL_MODE_NO, SBGC_CONTROL_MODE_NO, SBGC_CONTROL_MODE_NO},  // control mode for ROLL, PITCH, YAW
+        { { 0, 0 }, { 0, 0 }, { 0, 0 } }  // angle and speed
+    }; 
+    SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
+	sleep(4);
+#else
 	SBGC_cmd_control_t c = { 0, 0, 0, 0, 0, 0, 0 };
+	c.mode = SBGC_CONTROL_MODE_ANGLE;
+	c.anglePITCH = SBGC_DEGREE_TO_ANGLE(20);
+    //c.angleYAW = SBGC_DEGREE_TO_ANGLE(20);
+	if (SBGC_cmd_control_send(c, sbgc_parser))
+    {
+        fprintf(stderr, "Something wrong\n");
+        exit(-1);
+    }
+	sleep(4);
 
 	c.mode = SBGC_CONTROL_MODE_ANGLE;
-	c.speedROLL = c.speedPITCH = c.speedYAW = 30 * SBGC_SPEED_SCALE;
-	SBGC_cmd_control_send(c, sbgc_parser);
-    while(1) {
-
-        write( fd, "R", 1);
-        i = read(fd,buf,BUF_MAX);
-        buf[i] = '\0';
-        printf("%s",buf);
-        sleep(1);
+	c.anglePITCH = SBGC_DEGREE_TO_ANGLE(-20);
+    //c.angleYAW = SBGC_DEGREE_TO_ANGLE(10);
+	if (SBGC_cmd_control_send(c, sbgc_parser))
+    {
+        fprintf(stderr, "Something wrong\n");
+        exit(-1);
     }
+	sleep(4);
+	c.anglePITCH = SBGC_DEGREE_TO_ANGLE(-10);
+	c.angleYAW = SBGC_DEGREE_TO_ANGLE(-10);
+	SBGC_cmd_control_send(c, sbgc_parser);
+	sleep(4);
+
+	c.anglePITCH = 0;
+	c.angleYAW = 0;
+	SBGC_cmd_control_send(c, sbgc_parser);
+	sleep(4);
+
+#endif
 
 
     deinit_serial(fd, oldtio);

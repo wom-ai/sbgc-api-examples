@@ -2,6 +2,7 @@
 #define  __SBGC_Linux__
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <SBGC.h>
 
 
@@ -9,9 +10,9 @@
 
 extern SBGC_Parser sbgc_parser; 
 
-void SBGC_Demo_setup(Stream *serial);
-inline void LED_ON() {   digitalWrite(LED_PIN, HIGH); }
-inline void LED_OFF() {    digitalWrite(LED_PIN, LOW); }
+void SBGC_Demo_setup(int fd);
+inline void LED_ON() {   printf("LED_ON\n"); }
+inline void LED_OFF() {    printf("LED_OFF\n"); }
 void blink_led(uint8_t cnt);
 
 
