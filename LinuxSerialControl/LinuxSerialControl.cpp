@@ -106,13 +106,13 @@ int main( void)
 	sleep(4);
 
     printf("Set RPY=(0, 10, 0)...\n");
-    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(10); 
+    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(20); 
     SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
 	sleep(4);
 
 
     printf("Set RPY=(0, -10, 0)...\n");
-    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(-10); 
+    cmd_control.data[PITCH].angle = SBGC_DEGREE_TO_ANGLE(-20); 
     SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
 	sleep(4);
 
@@ -122,13 +122,13 @@ int main( void)
 	sleep(4);
 
     printf("Set RPY=(0, 0, 10)...\n");
-    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(10);
+    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(20);
     SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
 	sleep(4);
 
 
     printf("Set RPY=(0, 0, -10)...\n");
-    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(-10);
+    cmd_control.data[YAW].angle = SBGC_DEGREE_TO_ANGLE(-20);
     SBGC_cmd_control_ext_send(cmd_control, sbgc_parser);
 	sleep(4);
 
