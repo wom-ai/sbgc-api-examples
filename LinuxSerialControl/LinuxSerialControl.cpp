@@ -35,6 +35,15 @@ void init_serial(int &fd, struct termios &oldtio, struct termios &newtio)
     printf("open " DEVICE_NAME " by FD(%d)\n", fd);
     memset(&newtio, 0, sizeof(newtio) );
 
+    /*
+     from SimpleBGC_2_5_Serial_Protocol_Specification.pdf
+
+     32bit boards with firmware version 2.40, works only with parity=EVEN COM-port setting. Starting from 2.41,
+both EVEN and NONE parity are supported (NONE is default, and EVEN is detected automatically). So
+beside baud rates, host should vary parity setting when connecting to boards ver.>3.0
+      
+        reference: https://www.cmrr.umn.edu/~strupp/serial.html
+    */
     newtio.c_cflag = B115200; // BAUD RATE
     newtio.c_cflag &= ~PARENB;
     newtio.c_cflag &= ~CSTOPB;
