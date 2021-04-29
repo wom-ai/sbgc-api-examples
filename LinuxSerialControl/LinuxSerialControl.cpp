@@ -87,6 +87,29 @@ void init_sig(void)
     sigaction(SIGINT, &saio,NULL);
 }
 
+//
+// reference:
+//   * https://stackoverflow.com/questions/63785360/c-alignas1-does-not-affect-the-size-of-a-struct
+//   * https://dojang.io/mod/page/view.php?id=432
+//
+#pragma pack(push, 1)
+struct Version_Info {
+    unsigned char board_ver;
+    unsigned short firmware_ver;
+    unsigned char debug_mode;
+    unsigned short board_features;
+    unsigned char connection_flags;
+    unsigned int  frw_extra_id;
+    unsigned char reserved0;
+    unsigned char reserved1;
+    unsigned char reserved2;
+    unsigned char reserved3;
+    unsigned char reserved4;
+    unsigned char reserved5;
+    unsigned char reserved6;
+};
+#pragma pack(pop)
+
 struct Angle_Info {
     short imu_angle;
     short rc_target_angle;
@@ -100,7 +123,7 @@ int main( void)
     init_sig();
 
 	SBGC_Demo_setup(fd);
-#if 0
+#if 1
     printf("version info:\n");
     {
         SerialCommand cmd;
@@ -115,6 +138,7 @@ int main( void)
         size = read(fd,buf,4);
         if (size != 4) {
             fprintf(stderr, "failed to read header \n");
+            exit(-1);
         }
 
         for (int i = 0;i < 4; i++) {
@@ -123,13 +147,33 @@ int main( void)
 
         printf("[body]---------------------\n");
 #if 1
-        int recv_size = buf[2];
-        char byte;
-        for (int i = 0; i < recv_size + 1; i++)
+        struct Version_Info version = {0, };
+        size = read(fd, (unsigned char*)&version, sizeof(Version_Info));
+
+        if (size != sizeof(Version_Info))
         {
-            size = read(fd, &byte, 1);
-            printf("[%03d] 0x%x\t(%u)\n", i, (unsigned char)byte, (unsigned char)byte);
+            fprintf(stderr, "size = %d, sizeof(Version_Info) = %d\n", size, sizeof(Version_Info));
+            fprintf(stderr, "failed to read body \n");
+            exit(-1);
         }
+
+        unsigned char *cur = (unsigned char*)(&version);
+        for (int i = 0; i < sizeof(Version_Info); i++)
+        {
+            printf("[%d] %u\n", i, cur[i]);
+        }
+
+        printf("board_ver: %u(0x%x)\n", version.board_ver, version.board_ver);
+        printf("firmware_ver: %u(0x%x)\n", version.firmware_ver, version.firmware_ver);
+
+        // checksum
+        size = read(fd,buf,BUF_MAX);
+        buf[size] = '\0';
+
+        for (int i = 0;i < size; i++) {
+            printf("0x%x\t(%d)\n", buf[i], buf[i]);
+        }
+
 #else
 
         size = read(fd,buf,BUF_MAX);
@@ -142,9 +186,10 @@ int main( void)
     }
 #endif
 
+
     printf("angle info:\n");
 
-    //for (int k = 0; k = 100; k++)
+    //for (int k = 0; k < 100; k++)
     {
         SerialCommand cmd;
         cmd.init(SBGC_CMD_GET_ANGLES);
