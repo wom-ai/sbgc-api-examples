@@ -161,16 +161,17 @@ int main( void)
 
         if (size != sizeof(Version_Info))
         {
-            fprintf(stderr, "size = %d, sizeof(Version_Info) = %d\n", size, sizeof(Version_Info));
+            fprintf(stderr, "size = %d, sizeof(Version_Info) = %lu\n", size, sizeof(Version_Info));
             fprintf(stderr, "failed to read body \n");
             exit(-1);
         }
 
-        unsigned char *cur = (unsigned char*)(&version);
-        for (int i = 0; i < sizeof(Version_Info); i++)
-        {
-            printf("[%d] %u\n", i, cur[i]);
-        }
+        // Only for check
+//        unsigned char *cur = (unsigned char*)(&version);
+//        for (int i = 0; i < sizeof(Version_Info); i++)
+//        {
+//            printf("[%d] %u\n", i, cur[i]);
+//        }
 
         printf("board_ver: %u(0x%x)\n", version.board_ver, version.board_ver);
         printf("firmware_ver: %u(0x%x)\n", version.firmware_ver, version.firmware_ver);
