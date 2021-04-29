@@ -87,6 +87,12 @@ void init_sig(void)
     sigaction(SIGINT, &saio,NULL);
 }
 
+struct Angle_Info {
+    short imu_angle;
+    short rc_target_angle;
+    short rc_speed;
+};
+
 int main( void)
 {
     init_serial(fd, oldtio, newtio);
@@ -94,7 +100,7 @@ int main( void)
     init_sig();
 
 	SBGC_Demo_setup(fd);
-
+#if 0
     printf("version info:\n");
     {
         SerialCommand cmd;
@@ -133,6 +139,50 @@ int main( void)
             printf("0x%x\t(%d)\n", buf[i], buf[i]);
         }
 #endif
+    }
+#endif
+
+    printf("angle info:\n");
+
+    //for (int k = 0; k = 100; k++)
+    {
+        SerialCommand cmd;
+        cmd.init(SBGC_CMD_GET_ANGLES);
+        sbgc_parser.send_cmd(cmd, 0);
+
+        sleep(1); // MUST
+
+        int size=0;
+        char buf[BUF_MAX];
+        printf("[header]---------------------\n");
+        size = read(fd,buf,4);
+        if (size != 4) {
+            fprintf(stderr, "failed to read header \n");
+        }
+
+        for (int i = 0;i < 4; i++) {
+            printf("0x%x\t(%u)\n", (unsigned char)buf[i], (unsigned char)buf[i]);
+        }
+
+        printf("[body]---------------------\n");
+
+        struct Angle_Info angles[3] = {{0, }, {0, }, {0, }};
+        size = read(fd, (unsigned char*)angles, sizeof(Angle_Info)*3);
+        buf[size] = '\0';
+
+        for (int i = 0;i < 3; i++) {
+            printf("[%03d] imu_angle:       %03.03f\t(0x%x)\n", i, SBGC_ANGLE_TO_DEGREE(angles[i].imu_angle), angles[i].imu_angle);
+            printf("[%03d] rc_target_angle: %03.03f\t(0x%x)\n", i, SBGC_ANGLE_TO_DEGREE(angles[i].rc_target_angle), angles[i].rc_target_angle);
+            printf("[%03d] rc_speed:        %d\t(0x%x)\n", i, angles[i].rc_speed, angles[i].rc_speed);
+        }
+
+        // checksum
+        size = read(fd,buf,BUF_MAX);
+        buf[size] = '\0';
+
+        for (int i = 0;i < size; i++) {
+            printf("0x%x\t(%d)\n", buf[i], buf[i]);
+        }
     }
 
     printf("moving...\n");
