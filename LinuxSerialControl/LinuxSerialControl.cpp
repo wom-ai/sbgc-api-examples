@@ -36,14 +36,15 @@ void init_serial(int &fd, struct termios &oldtio, struct termios &newtio)
     memset(&newtio, 0, sizeof(newtio) );
 
     newtio.c_cflag = B115200; // BAUD RATE
-    //newtio.c_cflag = B230400;
+    newtio.c_cflag &= ~PARENB;
+    newtio.c_cflag &= ~CSTOPB;
+    newtio.c_cflag &= ~CSIZE;
     newtio.c_cflag |= CS8;
-    newtio.c_cflag |= CLOCAL;
-    newtio.c_cflag |= CREAD;
+
     newtio.c_iflag = IGNPAR;
  //   newtio.c_iflag = ICRNL;
     newtio.c_oflag = 0;
-    newtio.c_lflag = ICANON;
+    newtio.c_lflag &= ~ICANON; // MUST
     newtio.c_cc[VTIME] = 0;
     newtio.c_cc[VMIN] = 0;
 
@@ -92,10 +93,51 @@ int main( void)
 
     init_sig();
 
+	SBGC_Demo_setup(fd);
+
+    printf("version info:\n");
+    {
+        SerialCommand cmd;
+        cmd.init(SBGC_CMD_BOARD_INFO);
+        sbgc_parser.send_cmd(cmd, 0);
+
+        sleep(1); // MUST
+
+        int size=0;
+        char buf[BUF_MAX];
+        printf("[header]---------------------\n");
+        size = read(fd,buf,4);
+        if (size != 4) {
+            fprintf(stderr, "failed to read header \n");
+        }
+
+        for (int i = 0;i < 4; i++) {
+            printf("0x%x\t(%u)\n", (unsigned char)buf[i], (unsigned char)buf[i]);
+        }
+
+        printf("[body]---------------------\n");
+#if 1
+        int recv_size = buf[2];
+        char byte;
+        for (int i = 0; i < recv_size + 1; i++)
+        {
+            size = read(fd, &byte, 1);
+            printf("[%03d] 0x%x\t(%u)\n", i, (unsigned char)byte, (unsigned char)byte);
+        }
+#else
+
+        size = read(fd,buf,BUF_MAX);
+        buf[size] = '\0';
+
+        for (int i = 0;i < size; i++) {
+            printf("0x%x\t(%d)\n", buf[i], buf[i]);
+        }
+#endif
+    }
+
     printf("moving...\n");
 
     printf("Set RPY=(0, 0, 0)...\n");
-	SBGC_Demo_setup(fd);
 
 #if 1
     static SBGC_cmd_control_ext_t cmd_control = { 
